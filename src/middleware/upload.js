@@ -3,12 +3,8 @@ import multer from 'multer'
 import { config } from '../config/env.js'
 import { ValidationError } from '../utils/errors.js'
 
-const ALLOWED_MIME = new Set([
-  'image/jpeg',
-  'image/png',
-  'image/webp',
-  'image/gif'
-])
+// Accept any image/* MIME type (jpeg, png, webp, gif, avif, heic, tiff, bmp, svg, etc.)
+const isImageMime = (mime) => mime.startsWith('image/')
 
 // Keep the file in memory so it can be streamed straight to Cloudinary without
 // ever touching the local disk.
@@ -16,7 +12,7 @@ const upload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: config.maxUploadBytes, files: 1 },
   fileFilter: (req, file, cb) => {
-    if (ALLOWED_MIME.has(file.mimetype)) {
+    if (isImageMime(file.mimetype)) {
       cb(null, true)
     } else {
       cb(new ValidationError(`Unsupported image type: ${file.mimetype}`))

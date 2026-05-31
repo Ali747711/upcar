@@ -1,44 +1,44 @@
-import { formatCurrency } from '../utils/money.js'
+import { formatCurrency } from "../utils/money.js";
 
 /** Escape user-provided text so it can't break out of the HTML context. */
 const escapeHtml = (value) =>
-  String(value ?? '')
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;')
+  String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
 
 const formatDate = (date) =>
-  new Intl.DateTimeFormat('en-US', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric'
-  }).format(date)
+  new Intl.DateTimeFormat("en-US", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  }).format(date);
 
-const checkbox = (checked) => (checked ? '&#9745;' : '&#9744;') // ☑ / ☐
+const checkbox = (checked) => (checked ? "&#9745;" : "&#9744;"); // ☑ / ☐
 
 // Max parts per column, and per page (two columns side by side).
-const ROWS_PER_COLUMN = 8
-const ROWS_PER_PAGE = ROWS_PER_COLUMN * 2
+const ROWS_PER_COLUMN = 8;
+const ROWS_PER_PAGE = ROWS_PER_COLUMN * 2;
 
 const chunk = (items, size) => {
-  const pages = []
+  const pages = [];
   for (let i = 0; i < items.length; i += size) {
-    pages.push(items.slice(i, i + size))
+    pages.push(items.slice(i, i + size));
   }
-  return pages
-}
+  return pages;
+};
 
 const imageCell = (imageUrl) => {
   if (!imageUrl) {
-    return '<span class="doc__entry-img doc__entry-img--empty">No image</span>'
+    return '<span class="doc__entry-img doc__entry-img--empty">No image</span>';
   }
   // onerror swaps a broken/missing image for the placeholder so a bad URL
   // never leaves an empty cell or breaks layout.
   return `<img class="doc__entry-img" src="${escapeHtml(imageUrl)}" alt="Part image"
-    onerror="this.outerHTML='<span class=\'doc__entry-img doc__entry-img--empty\'>No image</span>'" />`
-}
+    onerror="this.outerHTML='<span class=\'doc__entry-img doc__entry-img--empty\'>No image</span>'" />`;
+};
 
 const renderEntry = (row) => `
   <div class="doc__entry">
@@ -46,11 +46,11 @@ const renderEntry = (row) => `
     ${imageCell(row.imageUrl)}
     <div class="doc__entry-info">
       <div class="doc__entry-code">${escapeHtml(row.partCode)}</div>
-      <div class="doc__entry-nums">Qty ${row.quantity} &times; ${formatCurrency(
-        row.price
+      <div class="doc__entry-nums">${row.quantity} &times; ${formatCurrency(
+        row.price,
       )} = <span class="doc__entry-total">${formatCurrency(row.total)}</span></div>
     </div>
-  </div>`
+  </div>`;
 
 const renderPage = (page) => `
   <section class="doc__page">
@@ -58,14 +58,14 @@ const renderPage = (page) => `
       <div class="doc__column">${page
         .slice(0, ROWS_PER_COLUMN)
         .map(renderEntry)
-        .join('')}</div>
+        .join("")}</div>
       <div class="doc__divider"></div>
       <div class="doc__column">${page
         .slice(ROWS_PER_COLUMN)
         .map(renderEntry)
-        .join('')}</div>
+        .join("")}</div>
     </div>
-  </section>`
+  </section>`;
 
 /**
  * Build the full HTML document for a Parts Inspection / Quotation Sheet.
@@ -89,7 +89,7 @@ export const buildHtml = ({
   rows,
   grandTotal,
   itemCount,
-  date = new Date()
+  date = new Date(),
 }) => `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -218,13 +218,13 @@ export const buildHtml = ({
       </div>
     </header>
 
-    ${chunk(rows, ROWS_PER_PAGE).map(renderPage).join('')}
+    ${chunk(rows, ROWS_PER_PAGE).map(renderPage).join("")}
 
     <footer class="doc__footer">
       ${
         notes
           ? `<div class="doc__notes"><div class="label">Notes</div><p>${escapeHtml(
-              notes
+              notes,
             )}</p></div>`
           : `<div class="doc__summary-item">Total items: <strong>${itemCount}</strong></div>`
       }
@@ -235,4 +235,4 @@ export const buildHtml = ({
     </footer>
   </article>
 </body>
-</html>`
+</html>`;
