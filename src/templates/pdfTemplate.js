@@ -167,8 +167,8 @@ export const buildHtml = ({
 
   .doc__entry-img {
     flex-shrink: 0;
-    width: 160px;
-    height: 100px;
+    width: 150px;
+    height: 90px;
     object-fit: cover;
     border: 1px solid var(--doc-border);
     border-radius: 4px;
