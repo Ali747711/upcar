@@ -217,7 +217,6 @@ export const buildHtml = ({
       </div>
       <div class="doc__meta">
         <div><span class="doc__meta-label">Date:</span> ${formatDate(date)}</div>
-        {% comment %} <div>Parts Inspection &amp; Quotation Sheet</div> {% endcomment %}
         <div>Upcar Group</div>
       </div>
     </header>
