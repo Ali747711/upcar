@@ -1,0 +1,38 @@
+services:
+  - type: web
+    name: upcar-backend
+    runtime: node
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: PORT
+        value: 10000
+      - key: NODE_ENV
+        value: production
+      - key: CORS_ORIGIN
+        value: "https://upcar-tau.vercel.app"
+      - key: MONGODB_URI
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_EXPIRES_IN
+        value: 7d
+      - key: BCRYPT_ROUNDS
+        value: 10
+      - key: MAX_PARTS
+        value: 500
+      - key: DEFAULT_PAGE_SIZE
+        value: 20
+      - key: MAX_PAGE_SIZE
+        value: 100
+      - key: CURRENCY
+        value: USD
+      - key: CURRENCY_LOCALE
+        value: en-US
+      - key: CLOUDINARY_CLOUD_NAME
+        value: damhwykbv
+      - key: CLOUDINARY_API_KEY
+        value: 794479739294446
+      - key: CLOUDINARY_API_SECRET
+        sync: false
