@@ -52,7 +52,7 @@ const renderEntry = (row) => `
     </div>
   </div>`;
 
-const renderPage = (page) => `
+const renderPage = (page, footer = "") => `
   <section class="doc__page">
     <div class="doc__columns">
       <div class="doc__column">${page
@@ -65,6 +65,7 @@ const renderPage = (page) => `
         .map(renderEntry)
         .join("")}</div>
     </div>
+    ${footer}
   </section>`;
 
 /**
@@ -195,6 +196,8 @@ export const buildHtml = ({
     margin-top: 14px;
     padding-top: 12px;
     border-top: 2px solid var(--doc-ink);
+    break-before: avoid;
+    page-break-before: avoid;
   }
   .doc__notes { max-width: 60%; }
   .doc__notes .label { font-weight: 600; margin-bottom: 4px; }
@@ -214,25 +217,31 @@ export const buildHtml = ({
       </div>
       <div class="doc__meta">
         <div><span class="doc__meta-label">Date:</span> ${formatDate(date)}</div>
-        <div>Parts Inspection &amp; Quotation Sheet</div>
+        {% comment %} <div>Parts Inspection &amp; Quotation Sheet</div> {% endcomment %}
+        <div>Upcar Group</div>
       </div>
     </header>
 
-    ${chunk(rows, ROWS_PER_PAGE).map(renderPage).join("")}
-
+    ${(() => {
+      const pages = chunk(rows, ROWS_PER_PAGE);
+      const footerHtml = `
     <footer class="doc__footer">
       ${
         notes
-          ? `<div class="doc__notes"><div class="label">Notes</div><p>${escapeHtml(
-              notes,
-            )}</p></div>`
+          ? `<div class="doc__notes"><div class="label">Notes</div><p>${escapeHtml(notes)}</p></div>`
           : `<div class="doc__summary-item">Total items: <strong>${itemCount}</strong></div>`
       }
       <div class="doc__grand-total">
         <div class="doc__grand-total-label">Grand Total</div>
         <div class="doc__grand-total-value">${formatCurrency(grandTotal)}</div>
       </div>
-    </footer>
+    </footer>`;
+      return pages
+        .map((page, i) =>
+          renderPage(page, i === pages.length - 1 ? footerHtml : ""),
+        )
+        .join("");
+    })()}
   </article>
 </body>
 </html>`;
