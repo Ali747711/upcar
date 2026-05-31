@@ -2,9 +2,13 @@ import { getBrowser } from './browser.js'
 import { buildHtml } from '../templates/pdfTemplate.js'
 import { AppError } from '../utils/errors.js'
 
-// Cap how long we wait for content (fonts/images) so a slow remote image can't
-// hang the request indefinitely.
-const RENDER_TIMEOUT_MS = 15000
+// Overall cap for parsing the HTML document.
+const RENDER_TIMEOUT_MS = 30000
+// Bounded wait for webfonts + images to settle after the DOM is ready. If a
+// remote asset (Google Fonts, a Cloudinary image) is slow or unreachable we
+// stop waiting and render with the system-font fallback / image placeholder
+// rather than hanging the whole request.
+const ASSET_WAIT_MS = 10000
 
 /**
  * Render the Parts Quotation HTML to a PDF buffer using the shared browser.
@@ -19,12 +23,35 @@ export const generatePdf = async (data) => {
   const page = await browser.newPage()
 
   try {
-    // networkidle0 waits for images and the Noto Sans webfont to finish loading
-    // so non-Latin text and thumbnails render correctly.
+    // Use 'domcontentloaded' (not 'networkidle0') so a slow CDN / lingering
+    // keep-alive connection to Google Fonts can't stall the render. We then
+    // wait explicitly — and with a hard cap — for fonts and images.
     await page.setContent(html, {
-      waitUntil: 'networkidle0',
+      waitUntil: 'domcontentloaded',
       timeout: RENDER_TIMEOUT_MS
     })
+
+    // Deterministically wait for webfonts + images, but never block forever.
+    await page.evaluate(async (maxWait) => {
+      const fontsReady =
+        document.fonts && document.fonts.ready
+          ? document.fonts.ready
+          : Promise.resolve()
+
+      const pendingImages = Array.from(document.images)
+        .filter((img) => !img.complete)
+        .map(
+          (img) =>
+            new Promise((resolve) => {
+              img.onload = resolve
+              img.onerror = resolve
+            })
+        )
+
+      const assetsReady = Promise.all([fontsReady, ...pendingImages])
+      const cap = new Promise((resolve) => setTimeout(resolve, maxWait))
+      await Promise.race([assetsReady, cap])
+    }, ASSET_WAIT_MS)
 
     // No page margin here: the shared `.doc` padding defines the page
     // margins so the PDF matches the in-app preview exactly.

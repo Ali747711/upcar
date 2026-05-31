@@ -4,3 +4,4 @@ node_modules/
 outputs/
 CLAUDE.md
 .claude
+.cache/
