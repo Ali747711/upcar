@@ -113,7 +113,7 @@ export const buildHtml = ({
     width: 210mm;
     min-height: 297mm;
     margin: 0 auto;
-    padding: 10mm 12mm;
+    padding: 14mm 12mm;
     background: #ffffff;
     color: var(--doc-ink);
     font-family: 'Noto Sans', Arial, sans-serif;
@@ -148,7 +148,7 @@ export const buildHtml = ({
     display: flex;
     align-items: center;
     gap: 12px;
-    padding: 6px;
+    padding: 8px;
     break-inside: avoid;
     page-break-inside: avoid;
   }
@@ -167,8 +167,8 @@ export const buildHtml = ({
 
   .doc__entry-img {
     flex-shrink: 0;
-    width: 150px;
-    height: 90px;
+    width: 160px;
+    height: 100px;
     object-fit: cover;
     border: 1px solid var(--doc-border);
     border-radius: 4px;
@@ -217,7 +217,7 @@ export const buildHtml = ({
       </div>
       <div class="doc__meta">
         <div><span class="doc__meta-label">Date:</span> ${formatDate(date)}</div>
-        <div>Parts Inspection &amp; Quotation Sheet</div>
+        <div>Upcar Group</div>
       </div>
     </header>
 
