@@ -11,5 +11,6 @@ npm install
 
 if [[ -z $SKIP_INSTALL_BROWSERS ]]; then
   echo "...Installing Chromium for Puppeteer"
-  npx puppeteer install
+  # Force install to project directory to ensure it's included in the build artifact
+  npx puppeteer browsers install chrome
 fi
