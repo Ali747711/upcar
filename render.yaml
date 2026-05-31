@@ -3,8 +3,8 @@ services:
     name: upcar-backend
     runtime: node
     plan: free
-    buildCommand: npm install
-    startCommand: npm start
+    buildCommand: "./render-build.sh"
+    startCommand: "node src/server.js"
     envVars:
       - key: PORT
         value: 10000
