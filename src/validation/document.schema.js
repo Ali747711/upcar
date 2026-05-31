@@ -4,10 +4,10 @@ import { config } from '../config/env.js'
 
 export const partSchema = z.object({
   id: z.string().optional(),
-  // Part code must be exactly 12 digits.
+  // Part code is required.
   partCode: z
     .string()
-    .regex(/^\d{12}$/, 'Part code must be exactly 12 digits'),
+    .min(1, 'Part code is required'),
   quantity: z
     .number({ invalid_type_error: 'Quantity must be a number' })
     .int('Quantity must be a whole number')

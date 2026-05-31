@@ -1,11 +1,12 @@
-import { config } from '../config/env.js'
-
-const formatter = new Intl.NumberFormat(config.currencyLocale, {
-  style: 'currency',
-  currency: config.currency
+// Dot as thousands separator, no currency symbol, no trailing decimal zeros.
+// e.g. 10000 → "10.000", 1500.5 → "1.500,5", 150 → "150"
+const formatter = new Intl.NumberFormat('de-DE', {
+  style: 'decimal',
+  minimumFractionDigits: 0,
+  maximumFractionDigits: 2
 })
 
-/** Format a numeric amount as a localized currency string. */
+/** Format a numeric amount as a plain number (no currency symbol). */
 export const formatCurrency = (amount) => formatter.format(amount ?? 0)
 
 /** Row total = quantity × price. */
