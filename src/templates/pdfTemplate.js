@@ -18,15 +18,44 @@ const formatDate = (date) =>
 
 const checkbox = (checked) => (checked ? "&#9745;" : "&#9744;"); // ☑ / ☐
 
-// Max parts per column, and per page (two columns side by side).
-const ROWS_PER_COLUMN = 8;
-const ROWS_PER_PAGE = ROWS_PER_COLUMN * 2;
+// Page 1 has the header, the last page has the footer — both need space
+// reserved. Only "middle" pages (2 to n-1) can use the full 10 per column.
+const ROWS_PER_COLUMN_EDGE   = 9;   // first page (header) and last page (footer)
+const ROWS_PER_COLUMN_MIDDLE = 10;  // interior pages — no header, no footer
 
-const chunk = (items, size) => {
+const EDGE_MAX   = ROWS_PER_COLUMN_EDGE   * 2;  // 18
+const MIDDLE_MAX = ROWS_PER_COLUMN_MIDDLE * 2;  // 20
+
+/**
+ * Split rows into pages:
+ *   page 1          → up to 18 rows  (header eats space)
+ *   pages 2 … n-1   → up to 20 rows  (full page)
+ *   last page       → up to 18 rows  (footer eats space)
+ *
+ * If the natural last chunk has 19-20 rows, the excess is split off onto a
+ * new page so the footer always fits alongside the final rows.
+ */
+const chunkPages = (items) => {
+  if (items.length === 0) return [];
+
   const pages = [];
-  for (let i = 0; i < items.length; i += size) {
-    pages.push(items.slice(i, i + size));
+
+  // First page
+  pages.push(items.slice(0, EDGE_MAX));
+
+  // Fill remaining rows in 20-row chunks
+  for (let i = EDGE_MAX; i < items.length; i += MIDDLE_MAX) {
+    pages.push(items.slice(i, i + MIDDLE_MAX));
   }
+
+  // If the last page (other than the only page) is too full to also fit the
+  // footer, split the overflow onto a fresh page that becomes the footer page.
+  if (pages.length > 1 && pages[pages.length - 1].length > EDGE_MAX) {
+    const last = pages.pop();
+    pages.push(last.slice(0, EDGE_MAX));
+    pages.push(last.slice(EDGE_MAX));
+  }
+
   return pages;
 };
 
@@ -52,16 +81,16 @@ const renderEntry = (row) => `
     </div>
   </div>`;
 
-const renderPage = (page, footer = "") => `
+const renderPage = (page, rowsPerColumn, footer = "") => `
   <section class="doc__page">
     <div class="doc__columns">
       <div class="doc__column">${page
-        .slice(0, ROWS_PER_COLUMN)
+        .slice(0, rowsPerColumn)
         .map(renderEntry)
         .join("")}</div>
       <div class="doc__divider"></div>
       <div class="doc__column">${page
-        .slice(ROWS_PER_COLUMN)
+        .slice(rowsPerColumn)
         .map(renderEntry)
         .join("")}</div>
     </div>
@@ -99,7 +128,7 @@ export const buildHtml = ({
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link
-  href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;600;700&display=swap"
+  href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;600;700&family=Noto+Sans+KR:wght@400;600;700&display=swap"
   rel="stylesheet" />
 <style>
   * { box-sizing: border-box; }
@@ -116,7 +145,7 @@ export const buildHtml = ({
     padding: 14mm 12mm;
     background: #ffffff;
     color: var(--doc-ink);
-    font-family: 'Noto Sans', Arial, sans-serif;
+    font-family: 'Noto Sans KR', 'Noto Sans', Arial, sans-serif;
     font-size: 11px;
     line-height: 1.4;
   }
@@ -222,7 +251,7 @@ export const buildHtml = ({
     </header>
 
     ${(() => {
-      const pages = chunk(rows, ROWS_PER_PAGE);
+      const pages = chunkPages(rows);
       const footerHtml = `
     <footer class="doc__footer">
       ${
@@ -236,9 +265,16 @@ export const buildHtml = ({
       </div>
     </footer>`;
       return pages
-        .map((page, i) =>
-          renderPage(page, i === pages.length - 1 ? footerHtml : ""),
-        )
+        .map((page, i) => {
+          // First and last pages use the smaller column count (header / footer).
+          // Every page in between gets the full 10.
+          const rowsPerColumn =
+            i === 0 || i === pages.length - 1
+              ? ROWS_PER_COLUMN_EDGE
+              : ROWS_PER_COLUMN_MIDDLE;
+          const footer = i === pages.length - 1 ? footerHtml : "";
+          return renderPage(page, rowsPerColumn, footer);
+        })
         .join("");
     })()}
   </article>
