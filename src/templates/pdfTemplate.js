@@ -18,44 +18,21 @@ const formatDate = (date) =>
 
 const checkbox = (checked) => (checked ? "&#9745;" : "&#9744;"); // ☑ / ☐
 
-// Page 1 has the header, the last page has the footer — both need space
-// reserved. Only "middle" pages (2 to n-1) can use the full 10 per column.
-const ROWS_PER_COLUMN_EDGE   = 9;   // first page (header) and last page (footer)
-const ROWS_PER_COLUMN_MIDDLE = 10;  // interior pages — no header, no footer
+// Uniform layout: every page holds two columns of 9 rows (18 parts), and a
+// new page is only started once a page is full. Each entry is ~94px tall
+// (90px image + 4px padding). Usable A4 height is ~1016px; the tightest case
+// is a single page carrying the header (~78px) AND the footer (~71px):
+//   78 + 9×94 + 71 = 995px ≤ 1016px, leaving a ~21px safety margin.
+// Middle/last pages have even more slack, so 9 rows per column always fits.
+const ROWS_PER_COLUMN = 9;
+const ROWS_PER_PAGE = ROWS_PER_COLUMN * 2; // 18
 
-const EDGE_MAX   = ROWS_PER_COLUMN_EDGE   * 2;  // 18
-const MIDDLE_MAX = ROWS_PER_COLUMN_MIDDLE * 2;  // 20
-
-/**
- * Split rows into pages:
- *   page 1          → up to 18 rows  (header eats space)
- *   pages 2 … n-1   → up to 20 rows  (full page)
- *   last page       → up to 18 rows  (footer eats space)
- *
- * If the natural last chunk has 19-20 rows, the excess is split off onto a
- * new page so the footer always fits alongside the final rows.
- */
+/** Split rows into pages of up to 18, starting a new page only when full. */
 const chunkPages = (items) => {
-  if (items.length === 0) return [];
-
   const pages = [];
-
-  // First page
-  pages.push(items.slice(0, EDGE_MAX));
-
-  // Fill remaining rows in 20-row chunks
-  for (let i = EDGE_MAX; i < items.length; i += MIDDLE_MAX) {
-    pages.push(items.slice(i, i + MIDDLE_MAX));
+  for (let i = 0; i < items.length; i += ROWS_PER_PAGE) {
+    pages.push(items.slice(i, i + ROWS_PER_PAGE));
   }
-
-  // If the last page (other than the only page) is too full to also fit the
-  // footer, split the overflow onto a fresh page that becomes the footer page.
-  if (pages.length > 1 && pages[pages.length - 1].length > EDGE_MAX) {
-    const last = pages.pop();
-    pages.push(last.slice(0, EDGE_MAX));
-    pages.push(last.slice(EDGE_MAX));
-  }
-
   return pages;
 };
 
@@ -99,9 +76,9 @@ const renderPage = (page, rowsPerColumn, footer = "") => `
 
 /**
  * Build the full HTML document for a Parts Inspection / Quotation Sheet.
- * Parts flow into two columns of up to 10 rows per page, divided by a vertical
- * line, with large images. This layout/CSS is kept in sync with the frontend
- * preview (src/components/document/*) so preview === PDF.
+ * Parts flow into two columns of up to 9 rows per page (18 per page), divided
+ * by a vertical line, with images. This layout/CSS is kept in sync with the
+ * frontend preview (src/components/document/*) so preview === PDF.
  *
  * @param {object} params
  * @param {string} params.carName
@@ -177,7 +154,7 @@ export const buildHtml = ({
     display: flex;
     align-items: center;
     gap: 12px;
-    padding: 8px;
+    padding: 2px 8px;
     break-inside: avoid;
     page-break-inside: avoid;
   }
@@ -196,7 +173,7 @@ export const buildHtml = ({
 
   .doc__entry-img {
     flex-shrink: 0;
-    width: 150px;
+    width: 146px;
     height: 90px;
     object-fit: cover;
     border: 1px solid var(--doc-border);
@@ -266,14 +243,9 @@ export const buildHtml = ({
     </footer>`;
       return pages
         .map((page, i) => {
-          // First and last pages use the smaller column count (header / footer).
-          // Every page in between gets the full 10.
-          const rowsPerColumn =
-            i === 0 || i === pages.length - 1
-              ? ROWS_PER_COLUMN_EDGE
-              : ROWS_PER_COLUMN_MIDDLE;
+          // The footer only renders on the final page.
           const footer = i === pages.length - 1 ? footerHtml : "";
-          return renderPage(page, rowsPerColumn, footer);
+          return renderPage(page, ROWS_PER_COLUMN, footer);
         })
         .join("");
     })()}
